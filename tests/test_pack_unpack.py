@@ -12,10 +12,16 @@ from sensirion_driver_adapters.rx_tx_data import RxData, TxData
 @pytest.mark.parametrize("tx, data", [
     (TxData(0xABCD, ">HH"), (1234,)),
     (TxData(0xABCD, ">HH8B"), (1234, [0] * 8)),
-    (TxData(0xABCD, ">HH8s"), (1234, "hello"))]
+    (TxData(0xABCD, ">HH8s"), (1234, "hello")),
+    (TxData(0xABCD, ">HH252B"), (1234, [0] * 8)),
+    (TxData(0xABCD, ">HH128s"), (1234, "hello world")),
+    (TxData(0xABCD, ">HH16I"), (1234, [0] * 8)),
+    (TxData(0xABCD, ">HH16f"), (1234, [float(22.7)] * 8)),
+    (TxData(0xABCD, ">HH128H"), (1234, [0xFFFF] * 64))
+
+]
                          )
 def test_pack(tx: TxData, data):
-
     def compare_values(v1, v2):
         if isinstance(v1, str):
             return v1 == v2.decode()
@@ -30,7 +36,8 @@ def test_pack(tx: TxData, data):
             ref.extend(d)
         else:
             ref.append(d)
-    unpacked = list(struct.unpack(tx._descriptor, packed))
+    descriptor, _ = tx._prepare_pack(data)
+    unpacked = list(struct.unpack(descriptor, packed))
     equal = filter(lambda x: compare_values(x[0], x[1]), zip(ref, unpacked))
     assert all(equal)
 

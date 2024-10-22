@@ -5,7 +5,7 @@ import logging
 import re
 import struct
 from functools import reduce
-from typing import Iterable
+from typing import Iterable, Tuple
 
 log = logging.getLogger(__name__)
 
@@ -15,10 +15,10 @@ def array_to_integer(element_bit_width: int, data: Iterable[int]) -> int:
 
 
 class TxData:
-    """Models the tx data that is exchanged. It it primarily a descriptor that knows how to convert structured
+    """Models the tx data that is exchanged. It is primarily a descriptor that knows how to convert structured
     data into a list of raw bytes"""
 
-    string_match = re.compile(r'(?P<length>\d*)(?P<descriptor>(s))')
+    ARRAY_MATCH = re.compile(r'(?P<length>(\d+)(?P<descriptor>[bBshHiIfd]))$')  # searches for an array
 
     def __init__(self, cmd_id,
                  descriptor,
@@ -33,24 +33,19 @@ class TxData:
         self._slave_address = slave_address
         self._device_busy_delay = device_busy_delay
         self._ignore_acknowledge = ignore_ack
-        string_fields = re.findall(self.string_match, descriptor)
+        array_fields = re.findall(self.ARRAY_MATCH, descriptor)
         self._string_len = 0
-        if not any(string_fields):
+        if not any(array_fields):
             return
-        if len(string_fields) > 1:
+        if len(array_fields) > 1:
             raise NotImplementedError("A transfer cannot contain more than one string field!")
-        self._string_len = int(string_fields[0][0])
+        self._array_len = int(array_fields[0][1])  # array length for use in struct
+        self.element_descriptor = array_fields[0][2]  # element descriptor for use in struct
 
-    def pack(self, argument_list=[]):
-        data_to_pack = [self._cmd_id]
-        for arg in argument_list:
-            if isinstance(arg, str):
-                data_to_pack.append(self._string_to_bytes(arg))
-            elif isinstance(arg, (list, tuple)):
-                data_to_pack.extend(arg)
-            else:
-                data_to_pack.append(arg)
-        return bytearray(struct.pack(self._descriptor, *data_to_pack))
+    def pack(self, args=None):
+        argument_list = args if args is not None else []
+        descriptor, data_to_pack = self._prepare_pack(argument_list)
+        return bytearray(struct.pack(descriptor, *data_to_pack))
 
     @property
     def command_width(self):
@@ -69,17 +64,42 @@ class TxData:
         return self._ignore_acknowledge
 
     def _string_to_bytes(self, string_param):
-        assert self._string_len > 0, "Invalid string descriptor"
-        if len(string_param) > self._string_len:
-            string_param = string_param[:self._string_len]
+        assert self._array_len > 0, "Invalid string descriptor"
+        if len(string_param) > self._array_len:
+            string_param = string_param[:self._array_len]
             log.warning("Truncating string!")
         return string_param.encode()
+
+    def _prepare_pack(self, argument_list) -> Tuple[str, list]:
+        """
+        Prepare the data list and the descriptor for packing the data.
+
+        We require this in order to be able to test.
+
+        :param argument_list: The list of data that will be packed
+
+        :returns: A tuple with the descriptor and an array with the processed input. Strings are encoded into bytearray
+        and the descriptor may be updated if the data ends with an array (SHDLC supports variable array length)
+        """
+        data_to_pack = [self._cmd_id]
+        descriptor = self._descriptor
+        for arg in argument_list:
+            if isinstance(arg, str):  # strings need to be encoded
+                arg_str = self._string_to_bytes(arg)
+                descriptor = self.ARRAY_MATCH.sub(f'{len(arg_str)}{self.element_descriptor}', descriptor, 1)
+                data_to_pack.append(arg_str)
+            elif isinstance(arg, (list, tuple)):  # list or tuple values
+                descriptor = self.ARRAY_MATCH.sub(f'{len(arg)}{self.element_descriptor}', descriptor, 1)
+                data_to_pack.extend(arg)
+            else:
+                data_to_pack.append(arg)
+        return descriptor, data_to_pack
 
 
 class RxData:
     """Descriptor for data to be received"""
 
-    field_match = re.compile(r'(?P<length>\d*)(?P<descriptor>(h|H|b|B|i|I|\?|s|q|Q|f|d))')
+    field_match = re.compile(r'(?P<length>\d*)(?P<descriptor>([hHbBiI?sqQfd]))')
     element_size_map = {'B': 8, 'I': 32, 'H': 16}
 
     def __init__(self, descriptor=None, convert_to_int=False):
@@ -89,7 +109,8 @@ class RxData:
         if self._descriptor is None:
             return
         self._rx_length = struct.calcsize(self._descriptor)
-        self._contains_array = RxData.field_match.search(descriptor) is not None
+        match = RxData.field_match.search(descriptor)
+        self._contains_array = match.group("length") != ''
         self._convert_to_int = convert_to_int
 
     @property
@@ -108,7 +129,7 @@ class RxData:
         For SHDLC always this function is used. For i2c all responses that contain arrays are unpacked with this
         function.
         Reasoning:
-            struct.pack returns a tuple of values. In the python code an array is treated as one value. Hence a
+            struct.pack() returns a tuple of values. In the python code an array is treated as one value. Hence, a
             descriptor in the form I8b would be unpacked as a tuple with 9 values but the driver would expect only
             two return values, an integer and an array containing the 8 bytes.
         """
@@ -126,7 +147,7 @@ class RxData:
                 field_len = 0
                 is_string = descriptor == 's'
                 for i in range(data_pos, min(data_pos + elem_size * int(length), len(data))):
-                    if data[i] == 0 and is_string:  # in SHDLC we have 0 delimeted arrays
+                    if data[i] == 0 and is_string:  # in SHDLC we have 0 delimited arrays
                         break
                     field_len += 1
                 descriptor = f'{byte_order_specifier}{field_len // elem_size}{descriptor}'
