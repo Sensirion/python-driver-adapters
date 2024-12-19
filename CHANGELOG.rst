@@ -1,6 +1,13 @@
 CHANGELOG
 ---------
 
+Unreleased
+::::::::::
+
+2.1.10
+::::::
+- Support for variable size TX array in SHLDC commands
+
 2.1.9
 :::::
 - fix usage of I2cChannel without CRC
