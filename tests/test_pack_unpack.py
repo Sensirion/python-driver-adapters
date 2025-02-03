@@ -63,7 +63,8 @@ def test_dynamic_unpack(rx: RxData, data):
         else:
             to_pack.append(d)
     packed = struct.pack(rx._descriptor, *to_pack)
-    unpacked = rx.unpack_dynamic_sized(packed)
+    unpacked = rx.unpack(packed)
+    assert len(unpacked) == len(data)
     all_received = []
     for received_data in unpacked:
         if isinstance(received_data, bytes):
