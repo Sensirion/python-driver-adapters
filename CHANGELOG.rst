@@ -4,6 +4,11 @@ CHANGELOG
 Unreleased
 :::::::::::
 
+2.2.0
+:::::
+- Update CI to support python 3.11
+- Fix document generation
+
 2.1.11
 ::::::
 - Fix unpacking of arrays
