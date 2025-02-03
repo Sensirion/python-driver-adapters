@@ -4,6 +4,10 @@ CHANGELOG
 Unreleased
 ::::::::::
 
+2.1.11
+::::::
+- Fix unpacking of arrays
+
 2.1.10
 ::::::
 - Support for variable size TX array in SHLDC commands
