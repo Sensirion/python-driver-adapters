@@ -20,11 +20,7 @@ class TxData:
 
     ARRAY_MATCH = re.compile(r'(?P<length>(\d+)(?P<descriptor>[bBshHiIfd]))$')  # searches for an array
 
-    def __init__(self, cmd_id,
-                 descriptor,
-                 device_busy_delay=0.0,
-                 slave_address=None,
-                 ignore_ack=False):
+    def __init__(self, cmd_id, descriptor, device_busy_delay=0.0, slave_address=None, ignore_ack=False):
         self._cmd_id = cmd_id
         self._command_width = 2
         if descriptor.startswith('>B'):
@@ -100,6 +96,7 @@ class RxData:
     """Descriptor for data to be received"""
 
     field_match = re.compile(r'(?P<length>\d*)(?P<descriptor>([hHbBiI?sqQfd]))')
+    array_match = re.compile(r'(?P<length>\d+)(?P<descriptor>([hHbBiI?sqQfd]))')
     element_size_map = {'B': 8, 'I': 32, 'H': 16}
 
     def __init__(self, descriptor=None, convert_to_int=False):
@@ -109,8 +106,8 @@ class RxData:
         if self._descriptor is None:
             return
         self._rx_length = struct.calcsize(self._descriptor)
-        match = RxData.field_match.search(descriptor)
-        self._contains_array = match.group("length") != ''
+        match = RxData.array_match.search(descriptor)
+        self._contains_array = match is not None
         self._convert_to_int = convert_to_int
 
     @property
