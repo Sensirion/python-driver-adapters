@@ -4,23 +4,29 @@ API Documentation
 
 Channel:
 --------
-.. automodule:: sensirion_i2c_adapter.channel
+.. automodule:: sensirion_driver_adapters.channel
    :members:
 
 I2C-Channel
 -----------
-.. automodule:: sensirion_i2c_adapter.i2c_channel
+.. automodule:: sensirion_driver_adapters.i2c_adapter.i2c_channel
    :members:
+
+SHDLC-Channel
+-------------
+.. automodule:: sensirion_driver_adapters.shdlc_adapter.shdlc_channel
+   :members:
+
 
 Transfer:
 ---------
-.. automodule:: sensirion_i2c_adapter.transfer
+.. automodule:: sensirion_driver_adapters.transfer
    :members:
 
 Multi-Device Support:
 ---------------------
-.. automodule:: sensirion_i2c_adapter.multi_device_support
+.. automodule:: sensirion_driver_adapters.multi_device_support
 
 Multi-channel SensorBridge:
-.. automodule:: sensirion_i2c_adapter.multi_sensor_bridge
+.. automodule:: sensirion_driver_adapters.multi_sensor_bridge
 

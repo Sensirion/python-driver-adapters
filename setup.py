@@ -3,6 +3,7 @@
 
 import os
 import re
+
 from setuptools import setup, find_packages
 
 ################################
@@ -22,36 +23,38 @@ install_requires = [
 # Packages required for tests and docs
 extras_require = {
     'test': [
-        'flake8~=3.7.8',
-        'pytest~=7.0.1',
-        'pytest-cov~=3.0.0',
+        'flake8~=6.0.0',
+        'pytest~=8.1.1',
+        'pytest-cov~=5.0.0',
     ],
     'docs': [
-        'sphinx~=2.2.1',
-        'sphinx-rtd-theme~=0.4.3',
+        'lazy-object-proxy ~=1.7.1',
+        'sphinx~=7.1.0',
+        'docutils~=0.18.0',
+        'sphinx_rtd_theme~=1.3.0',
+        'sphinx-autoapi~=3.0.0'
     ]
 }
 
 package_name = "sensirion-driver-adapters"
 author = 'Rolf Laich'
 author_email = 'rolf.laich@sensirion.com'
-description = 'adapter classes to use sensirion_i2c_driver package'
+description = 'Adapter classes to use sensirion_i2c_driver package'
 keywords = 'driver driver-generator'
-
 
 ################################
 # Required developer input end
 ################################
 
-assert(package_name != "<sensirion-package-name>")
-assert(author != "<full name author>")
-assert(author_email != '<firstname.familyname>@sensirion.com')
-assert(description != '<short description of the package>')
-assert(keywords != '<keywords meaningful>')
+assert (package_name != "<sensirion-package-name>")
+assert (author != "<full name author>")
+assert (author_email != '<firstname.familyname>@sensirion.com')
+assert (description != '<short description of the package>')
+assert (keywords != '<keywords meaningful>')
 
 # Note: Remove this check only for old packages which do not (yet) have the
 # "sensirion-" prefix for compatibility reasons.
-assert(package_name.startswith("sensirion-"))
+assert (package_name.startswith("sensirion-"))
 
 # It is important to NOT import anything, not even the version, from the package which is being built.
 # Otherwise weird behavior is guaranteed.
@@ -84,6 +87,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ]
 )

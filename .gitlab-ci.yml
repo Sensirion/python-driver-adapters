@@ -1,78 +1,75 @@
-include: https://gitlab/Sensirion/Python/ci-config-python/raw/master/gitlab-ci-template-v2.yml
+include: https://gitlab/Sensirion/Python/ci-config-python/raw/master/gitlab-ci-template-v3.yml
 
 check_rst_syntax:
-  extends: .check_rst_syntax_v2
-  script:
-    - rst-lint *.rst
+  extends: .check_rst_syntax_v3
+  image: registry.gitlab.sensirion.lokal/sensirion/docker/docker-python:3.11-22.04-2.13.0
 
-py3p6_linux_build:
-  extends: .py3p6_linux_build_v2
-  script:
-  - pip install -e .[test]
-  - flake8
-  - pytest -m 'not needs_hardware'
-  - python3 setup.py bdist_wheel
+check_flake8:
+  extends: .check_flake8_v3
+  image: registry.gitlab.sensirion.lokal/sensirion/docker/docker-python:3.11-22.04-2.13.0
 
-py3p8_linux_build:
-  extends: .py3p8_linux_build_v2
-  script:
-    - pip install -e .[test]
-    - flake8
-    - pytest -m 'not needs_hardware'
-    - python3 setup.py bdist_wheel
+check_editorconfig:
+  extends: .check_editorconfig_v3
+  image: registry.gitlab.sensirion.lokal/sensirion/docker/docker-python:3.11-22.04-2.13.0
 
-py3p8_64bit_win_build:
-  extends: .py3p8_64bit_win_docker_build_v2
+py3p8_linux_build_v3:
+  extends: .py3p8_linux_build_v3
+  before_script:
+    - pip install --upgrade setuptools[core]
+
+py3p8_linux_test:
+  extends: .py3p8_linux_test_v3
   script:
     - pip install -e .[test]
-    - flake8
-    - pytest -m 'not needs_hardware'
-    - python setup.py bdist_wheel -q
+    - pytest -m 'not needs_hardware' --cov-report term --cov-report xml:tests/coverage.xml --junitxml=tests/report.xml
 
-py3p8_linux_sdist_v2:
-    extends: .py3p8_linux_sdist_v2
+py3p11_linux_test:
+  extends: .py3p11_linux_test_v3
+  script:
+    - pip install -e .[test]
+    - pytest -m 'not needs_hardware' --cov-report term --cov-report xml:tests/coverage.xml --junitxml=tests/report.xml
 
+py3p8_windows_build_v3:
+  extends: .py3p8_windows_build_v3
+  before_script:
+    - pip install --upgrade setuptools[core]
+
+py3p8_64bit_win_test:
+  extends: .py3p8_windows_test_v3
+  script:
+    - pip install -e .[test]
+    - pytest -m 'not needs_hardware' --cov-report term --cov-report xml:tests/coverage.xml --junitxml=tests/report.xml
+
+py3p11_64bit_win_test:
+  extends: .py3p11_windows_test_v3
+  script:
+    - pip install -e .[test]
+    - pytest -m 'not needs_hardware' --cov-report term --cov-report xml:tests/coverage.xml --junitxml=tests/report.xml
 
 build_docs:
-  extends: .build_docs_v2
-  script:
-    - apt-get update && apt-get install -y graphviz
-    - python setup.py install
-    - pip install -r docs/requirements.txt
-    - ./ci/set_git_config.sh
-    - sphinx-versioning build -r "$CI_COMMIT_REF_NAME" -w "$CI_COMMIT_REF_NAME" docs docs/_build/html
-  after_script: [] # overwrite after_script from template
-  artifacts:
-    paths: [docs/_build]
-    expire_in: 1 week
-    when: always
-
+  image: registry.gitlab.sensirion.lokal/sensirion/docker/docker-python:3.11-22.04-2.13.0
+  extends: .build_docs_v3
 
 deploy_staging:
-  extends: .deploy_staging_v2
+  extends: .deploy_staging_v3
 
 deploy_stable:
-  extends: .deploy_stable_v2
+  extends: .deploy_stable_v3
   environment:
     name: pypi.org
     url: https://pypi.org/project/sensirion-i2c-adapters/
   before_script:
-    - pip install twine~=1.12.1
+    - pip install twine~=5.1.1
   script:
     - PKG_VERSION=$(python setup.py --version --quiet | tail -n1)
     - TAG_VERSION=$(git describe --tags)
     - if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then echo "Tag Version ($TAG_VERSION) != Package Version ($PKG_VERSION)" && exit 1; fi
     - twine upload dist/*
 
-deploy_docs:
-  stage: deploy
-  tags: [linux, docker]
-  image: registry.gitlab.sensirion.lokal/sensirion/docker/docker-python:3.8-20.04-2.6.0
-  dependencies: []
-  only: [master, tags]
-  script:
-    - apt-get update && apt-get install -y graphviz
-    - python setup.py install
-    - pip install -r docs/requirements.txt
-    - ./ci/set_git_config.sh
-    - sphinx-versioning push docs gh-pages .
+# Deploy all files within the "public" directory of the artifacts from the jobs
+# specified as dependencies. Job must be named pages, otherwise gitlab does
+# not deploy to gitlab pages.
+pages:
+  extends: .deploy_pages_v3
+  image: registry.gitlab.sensirion.lokal/sensirion/docker/docker-python:3.11-22.04-2.13.0
+  dependencies: [build_docs]
