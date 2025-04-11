@@ -38,6 +38,14 @@ class TxData:
         self._array_len = int(array_fields[0][1])  # array length for use in struct
         self.element_descriptor = array_fields[0][2]  # element descriptor for use in struct
 
+    @property
+    def cmd_id(self):
+        return self._cmd_id
+
+    @cmd_id.setter
+    def cmd_id(self, value):
+        self._cmd_id = value
+
     def pack(self, args=None):
         argument_list = args if args is not None else []
         descriptor, data_to_pack = self._prepare_pack(argument_list)
@@ -77,7 +85,7 @@ class TxData:
         :returns: A tuple with the descriptor and an array with the processed input. Strings are encoded into bytearray
         and the descriptor may be updated if the data ends with an array (SHDLC supports variable array length)
         """
-        data_to_pack = [self._cmd_id]
+        data_to_pack = [self.cmd_id]
         descriptor = self._descriptor
         for arg in argument_list:
             if isinstance(arg, str):  # strings need to be encoded
