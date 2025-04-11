@@ -2,7 +2,9 @@ CHANGELOG
 ---------
 
 Unreleased
-:::::::::::
+::::::::::
+
+- Allow to update command id
 
 2.2.0
 :::::
