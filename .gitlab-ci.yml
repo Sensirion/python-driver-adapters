@@ -47,7 +47,6 @@ py3p11_64bit_win_test:
     - pytest -m 'not needs_hardware' --cov-report term --cov-report xml:tests/coverage.xml --junitxml=tests/report.xml
 
 build_docs:
-  image: registry.gitlab.sensirion.lokal/sensirion/docker/docker-python:3.11-22.04-2.13.0
   extends: .build_docs_v3
 
 deploy_staging:
@@ -71,5 +70,4 @@ deploy_stable:
 # not deploy to gitlab pages.
 pages:
   extends: .deploy_pages_v3
-  image: registry.gitlab.sensirion.lokal/sensirion/docker/docker-python:3.11-22.04-2.13.0
   dependencies: [build_docs]
