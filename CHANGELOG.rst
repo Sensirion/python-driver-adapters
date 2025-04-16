@@ -4,6 +4,8 @@ CHANGELOG
 Unreleased
 ::::::::::
 
+2.3.0
+:::::
 - Allow to update command id
 
 2.2.0
