@@ -6,7 +6,7 @@ import struct
 import time
 from typing import Any, Iterable, Optional, Tuple, Union
 
-from sensirion_shdlc_driver.errors import ShdlcDeviceError, ShdlcResponseError
+from sensirion_shdlc_driver.errors import ShdlcDeviceError, ShdlcResponseError, ShdlcError
 from sensirion_shdlc_driver.port import ShdlcPort
 
 from sensirion_driver_adapters.channel import TxRxChannel
@@ -99,10 +99,16 @@ class ShdlcChannel(TxRxChannel):
         data = tx_bytes[payload_offset:]
         timeout = max(self._channel_delay, device_busy_delay)
         self._port.set_expected_length(response)
-        rx_addr, rx_cmd, rx_state, rx_data = self._port.transceive(slave_address=shdlc_address,
-                                                                   command_id=cmd_id,
-                                                                   data=data,
-                                                                   response_timeout=timeout)
+        try:
+            rx_addr, rx_cmd, rx_state, rx_data = self._port.transceive(slave_address=shdlc_address,
+                                                                       command_id=cmd_id,
+                                                                       data=data,
+                                                                       response_timeout=timeout)
+        except ShdlcError as e:
+            if ignore_errors:
+                return None
+            raise e
+
         if rx_addr != shdlc_address:
             raise ShdlcResponseError("Received slave address {} instead of {}."
                                      .format(rx_addr, shdlc_address))

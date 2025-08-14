@@ -4,6 +4,10 @@ CHANGELOG
 Unreleased
 ::::::::::
 
+2.3.1
+:::::
+- Support ignore-errors for SHDLC commands; The interface remains the same.
+
 2.3.0
 :::::
 - Allow to update command id

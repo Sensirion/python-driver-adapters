@@ -40,7 +40,8 @@ class ShdlcSerialPortChannelProvider(ShdlcChannelProvider):
 
     def prepare_channel(self):
         """Initialize a concrete channel object that can be used to create a new sensor instance."""
-        self._shdlc_port = ShdlcSerialPort(port=self.serial_port, baudrate=self.serial_baud_rate)
+        self._shdlc_port = ShdlcSerialPort(port=self.serial_port, baudrate=self.serial_baud_rate,
+                                           additional_response_time=0.02)
 
     def get_channel(self, channel_delay: float) -> ShdlcChannel:
         """
