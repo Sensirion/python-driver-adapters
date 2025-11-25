@@ -4,6 +4,10 @@ CHANGELOG
 Unreleased
 ::::::::::
 
+2.4.0
+:::::
+- Update project structure
+
 2.3.1
 :::::
 - Support ignore-errors for SHDLC commands; The interface remains the same.
