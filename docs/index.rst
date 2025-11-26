@@ -1,7 +1,7 @@
-Welcome to sensirion-i2c-adapter's documentation!
+Welcome to sensirion-driver-adapters documentation!
 ====================================================
 
-This is the documentation for sensirion-i2c-adapter.
+This is the documentation for the package sensirion-driver-adapters.
 
 Contents
 --------
