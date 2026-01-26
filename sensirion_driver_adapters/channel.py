@@ -1,16 +1,82 @@
 # -*- coding: utf-8 -*-
 # (c) Copyright 2021 Sensirion AG, Switzerland
 
+from __future__ import annotations
+
 import abc
-from typing import Any, Iterable, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Iterable, Optional, Tuple, Iterator, Protocol
 
 from sensirion_driver_adapters.rx_tx_data import RxData
 
 
+@dataclass
+class MeasurementPacket:
+    timestamp: float
+    data: Optional[bytes]
+
+
+@dataclass
+class Measurement:
+    stream_id: int  # the id of the stream that produced this measurement
+    timestamp: float  # the timestamp of the measurement
+    data: Tuple[Any, ...]  # the measurement data
+
+
+class MeasurementStream(Protocol):
+
+    def open(self) -> Iterator[Measurement]:
+        """ Open the stream"""
+
+    def close(self):
+        """ Close the stream"""
+
+    def get_stream_id(self) -> int:
+        """Return the id of the stream"""
+
+    def __enter__(self) -> MeasurementStream:
+        """Enter the streaming context"""
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        """Exit the streaming context"""
+
+    def __iter__(self) -> Iterator[Measurement]:
+        """Open the stream and return an iterator over the measurements"""
+
+    def __next__(self) -> Measurement:
+        """Get the next measurement from the stream"""
+
+
+class StreamingChannel(Protocol):
+    def get_measurement_stream(self, tx_bytes: bytes,
+                               payload_offset: int,
+                               response: RxData,
+                               measurement_interval_us: int,
+                               buffered_samples: int = 100,
+                               sensor_busy_delay_us: int = 10,
+                               repeat_tx_data: bool = False) -> MeasurementStream:
+        """Start a measurement stream.
+
+        :param tx_bytes: The command and its parameters to trigger the measurement on the sensor.
+        :param payload_offset: The bytes up to the payload_offset represent the command id
+        :param response: The response is an object that is able to unpack a raw response.
+        :param measurement_interval_us: The interval between two measurements in microseconds.
+        :param buffered_samples: The number of samples that shall be buffered.
+        :param sensor_busy_delay_us: The number of microseconds between write data tx and read result.
+        :param repeat_tx_data: If True, the tx_bytes will be repeated for each measurement until the stream is closed.
+            Otherwise, the tx_bytes will be transmitted only once to trigger the measurement.
+        :param slave_address: Overwrite the i2c-address of the channel
+        """
+
+
 class TxRxChannel(abc.ABC):
     """
-    This is the abstract base class for any channel. A channel is a transportation medium to transfer data from any
-    source to any destination.
+    Defines an abstract base class for bidirectional communication with a sensor device.
+
+    This class provides an interface for transmitting and receiving data with a sensor.
+    It also allows streaming measurements, stripping protocol-level data, and enforcing a
+    timeout property for communication.
+
     """
 
     @abc.abstractmethod
@@ -21,16 +87,16 @@ class TxRxChannel(abc.ABC):
                    slave_address: Optional[int] = None,
                    ignore_errors: bool = False) -> Optional[Tuple[Any, ...]]:
         """
-        Transfers the data to and from sensor.
+        Transfers the data to and from a sensor.
 
         :param tx_bytes:
             Raw bytes to be transmitted
         :param payload_offset:
-            The data my contain a header that needs to be left untouched, pushing the date through the protocol stack.
+            The data may contain a header that needs to be left untouched, pushing the date through the protocol stack.
             The Payload offset points to the end of the header and the beginning of the data
         :param response:
             The response is an object that is able to unpack a raw response.
-            It has to provide a method 'interpret_response.
+            It has to provide a method 'interpret_response'.
         :param device_busy_delay:
             Indication how long the receiver of the message will be busy until processing of the data has been
             completed.
@@ -61,7 +127,7 @@ class TxRxChannel(abc.ABC):
 
 class AbstractMultiChannel(TxRxChannel):
     """
-    This is the base class for any multi channel implementation. A multi channel is used to mimic simultaneous
+    This is the base class for any multichannel implementation. A multichannel is used to mimic simultaneous
     communication with several sensors and is used by the MultiDeviceDecorator.
     """
 
