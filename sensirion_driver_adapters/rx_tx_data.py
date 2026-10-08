@@ -162,9 +162,10 @@ class RxData:
                 elif is_string:  # a string
                     val = val[0].decode()
                 unpacked.append(val)
+                data_pos += field_len
             else:
                 descriptor = f"{byte_order_specifier} {descriptor}"
                 unpacked.extend(struct.unpack_from(descriptor, data, data_pos))
-            data_pos += elem_size
+                data_pos += elem_size
             match = self.field_match.match(self._descriptor, descriptor_pos)
         return tuple(unpacked)
