@@ -4,6 +4,10 @@ CHANGELOG
 Unreleased
 ::::::::::
 
+2.4.1
+:::::
+- Fix unpacking rx data
+
 2.4.0
 :::::
 - Update project structure
