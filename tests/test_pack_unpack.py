@@ -52,7 +52,10 @@ def test_unpack(rx: RxData, data):
 
 @pytest.mark.parametrize("rx, data", [(RxData(">HH"), (0xABCD, 1234)),
                                       (RxData(">HH8B"), (0xABCD, 1234, (1, 2, 3, 4, 5, 6, 7, 8))),
-                                      (RxData(">I16s"), (0xABCD, 'hello world'))])
+                                      (RxData(">I16s"), (0xABCD, 'hello world')),
+                                      (RxData(">I8BHHH"), (0x0803028D,
+                                                           (0x32, 0x32, 0x32, 0x38, 0x42, 0x44, 0x00, 0x00),
+                                                           0x0C10, 0x1121, 0x0054))])
 def test_dynamic_unpack(rx: RxData, data):
     to_pack = []
     for d in data:
