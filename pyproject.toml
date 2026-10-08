@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "sensirion-driver-adapters"
 description = "Adapter classes to use sensirion_i2c_driver package"
-version = "2.4.0"
+version = "2.4.1"
 
 readme = "README.md"
 
